@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#130d0a">
+  <title>Cookie Clicker: Infinite</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Cookie Clicker Infinite home">
+      <span class="brand-cookie">🍪</span>
+      <span>COOKIE<span class="brand-accent">INFINITE</span><small>THE MULTIVERSE OF CRUMBS</small></span>
+    </a>
+    <div class="top-actions">
+      <span id="player-username" class="player-username">👤 Choose username</span>
+      <button id="change-username" class="small-button" type="button">Username</button>
+      <span id="save-status" class="save-status"><span class="status-dot"></span> Saved locally</span>
+      <button id="sound-toggle" class="icon-button" title="Toggle sound" aria-label="Toggle sound">🔊</button>
+      <button id="save-button" class="small-button">Save now</button>
+      <button id="admin-open" class="small-button admin-open">⚙ Admin</button>
+      <button id="reset-button" class="small-button danger">Reset</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="hero-panel panel">
+      <div class="hero-topline"><span class="eyebrow"><span class="live-dot"></span> COOKIE PRODUCTION ONLINE</span><span id="prestige-chip" class="prestige-chip">✨ 0 Prestige</span></div>
+      <div class="cookie-count-wrap">
+        <div id="cookie-count" class="cookie-count">0</div>
+        <div id="cookie-label" class="cookie-label">cookies in the vault</div>
+        <div class="production-line"><span class="production-dot"></span><span id="cps">0</span> cookies per second <span class="divider-dot">•</span> <span id="click-power">+1</span> per click</div>
+      </div>
+      <div class="cookie-stage">
+        <div class="cookie-orbit orbit-one"></div><div class="cookie-orbit orbit-two"></div>
+        <div id="cookie-button" class="big-cookie-button" role="button" tabindex="0" aria-label="Bake one cookie">
+          <div id="main-cookie" class="main-cookie skin-classic">
+            <span class="chip chip-a"></span><span class="chip chip-b"></span><span class="chip chip-c"></span><span class="chip chip-d"></span><span class="chip chip-e"></span><span class="chip chip-f"></span><span class="chip chip-g"></span><span class="chip chip-h"></span><span class="cookie-shine"></span>
+          </div>
+        </div>
+        <button id="golden-cookie" class="golden-cookie hidden" aria-label="Collect golden cookie">🍪<span>GOLDEN!</span></button>
+        <div id="click-floats" class="click-floats" aria-hidden="true"></div>
+      </div>
+      <div class="click-hint">CLICK THE COOKIE TO BAKE <span>✦</span></div>
+      <div class="quick-stats">
+        <div class="stat-card"><span class="stat-icon">🧁</span><span class="stat-name">TOTAL BAKED</span><strong id="total-baked">0</strong></div>
+        <div class="stat-card"><span class="stat-icon">👆</span><span class="stat-name">TOTAL CLICKS</span><strong id="total-clicks">0</strong></div>
+        <div class="stat-card"><span class="stat-icon">🏭</span><span class="stat-name">BUILDINGS</span><strong id="building-count">0</strong></div>
+      </div>
+      <div class="golden-notice"><span>✨</span><div><strong>Golden cookie alert</strong><small>Keep an eye out. Click it before it disappears!</small></div><span id="golden-timer" class="golden-timer">SEARCHING</span></div>
+      <section id="global-chat" class="global-chat" aria-label="Global chat">
+        <div class="chat-heading"><div><span class="eyebrow">🍪 BAKERS EVERYWHERE</span><h2>Global Chat</h2></div><span id="chat-status" class="chat-status">Connecting…</span></div>
+        <div id="chat-messages" class="chat-messages" aria-live="polite"><p class="chat-empty">Loading real messages…</p></div>
+        <form id="chat-form" class="chat-form">
+          <label class="sr-only" for="chat-message">Write a global message</label>
+          <input id="chat-message" type="text" maxlength="240" autocomplete="off" placeholder="Say something to all bakers…" required>
+          <button id="chat-send" class="buy-button" type="submit">Send</button>
+        </form>
+        <small class="chat-note">Your chosen username is displayed. Only messages actually sent by players appear here.</small>
+      </section>
+    </section>
+
+    <section class="right-column">
+      <nav class="tabs panel" aria-label="Game sections">
+        <button class="tab active" data-tab="shop">🏭 <span>Shop</span></button>
+        <button class="tab" data-tab="upgrades">⚡ <span>Upgrades</span><i id="upgrade-badge" class="tab-badge hidden">!</i></button>
+        <button class="tab" data-tab="achievements">🏆 <span>Trophies</span></button>
+        <button class="tab" data-tab="skins">🎨 <span>Skins</span></button>
+        <button class="tab" data-tab="prestige">✨ <span>Rebirth</span></button>
+        <button id="admin-tab-button" class="tab admin-tab hidden" data-tab="admin">🛡️ <span>Admin</span></button>
+      </nav>
+      <section id="tab-shop" class="tab-content panel">
+        <div class="section-heading"><div><span class="eyebrow">BUILD YOUR EMPIRE</span><h2>Cookie shop</h2></div><span class="pill" id="shop-owned">0 owned</span></div>
+        <div id="building-list" class="building-list"></div>
+      </section>
+      <section id="tab-upgrades" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">MAKE EVERY CRUMB COUNT</span><h2>Upgrades</h2></div><span class="pill" id="upgrade-count">0 unlocked</span></div>
+        <p class="muted intro">Permanent boosts that stack with your buildings and prestige.</p>
+        <div id="upgrade-list" class="upgrade-list"></div>
+      </section>
+      <section id="tab-achievements" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">PROVE YOUR CRUMB SUPREMACY</span><h2>Trophies</h2></div><span class="pill" id="achievement-progress">0 / 0</span></div>
+        <div class="achievement-progress-track"><div id="achievement-progress-bar"></div></div>
+        <div id="achievement-list" class="achievement-list"></div>
+      </section>
+      <section id="tab-skins" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">LOOK FRESH WHILE YOU BAKE</span><h2>Cookie skins</h2></div><span class="pill" id="skin-owned">1 owned</span></div>
+        <div id="skin-list" class="skin-list"></div>
+      </section>
+      <section id="tab-admin" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">RESTRICTED CONTROL ROOM</span><h2>🛡️ Admin panel</h2></div><span class="pill admin-pill">ADMIN ACCESS</span></div>
+        <div class="admin-warning">🔐 <strong>Protected global admin:</strong> global announcements and multiplier changes are checked by a Supabase Edge Function. Deploy the updated function and configure its secrets. Cookie controls below still affect only this browser.</div>
+        <div class="admin-section"><h3>📢 Global announcement</h3><p class="muted">Publish a message to every player using an authorized admin username.</p><textarea id="admin-message" maxlength="240" placeholder="Type your announcement (max 240 characters)..."></textarea><div class="admin-actions"><button id="send-admin-message" class="primary-button">Publish announcement</button><button id="clear-admin-message" class="small-button">Clear message</button></div><div id="admin-announcement-preview" class="announcement-preview hidden"></div></div>
+        <div class="admin-section"><h3>⚡ Global multipliers</h3><p class="muted">These boosts apply to every player while active. Set a duration; the server stores the expiry time.</p>
+          <label for="admin-click-multiplier">Global click multiplier</label><select id="admin-click-multiplier" class="admin-select"><option value="1">×1 (normal)</option><option value="2">×2</option><option value="5">×5</option><option value="10">×10</option><option value="25">×25</option><option value="50">×50</option><option value="100">×100</option></select>
+          <label for="admin-cps-multiplier">Global CPS multiplier</label><select id="admin-cps-multiplier" class="admin-select"><option value="1">×1 (normal)</option><option value="2">×2</option><option value="5">×5</option><option value="10">×10</option><option value="25">×25</option><option value="50">×50</option><option value="100">×100</option></select>
+          <label for="admin-multiplier-duration">Duration</label><select id="admin-multiplier-duration" class="admin-select"><option value="300">5 minutes</option><option value="900">15 minutes</option><option value="1800">30 minutes</option><option value="3600">1 hour</option><option value="21600">6 hours</option><option value="86400">24 hours</option></select>
+          <div id="global-multiplier-status" class="multiplier-status">Loading global multiplier status…</div>
+          <div class="admin-actions"><button id="admin-activate-multipliers" class="primary-button">Activate globally</button><button id="admin-deactivate-multipliers" class="small-button danger">Deactivate boosts</button></div>
+        </div>
+        <div class="admin-section"><h3>🍪 Cookie controls</h3><label for="admin-cookie-amount">Amount of cookies to add</label><div class="admin-inline"><input id="admin-cookie-amount" type="number" min="1" step="any" value="1000000"><button id="admin-add-cookies" class="buy-button">Add cookies</button></div><label for="admin-prestige-amount">Set prestige points</label><div class="admin-inline"><input id="admin-prestige-amount" type="number" min="0" step="1" value="100"><button id="admin-set-prestige" class="buy-button">Set prestige</button></div><div class="admin-actions"><button id="admin-unlock-all" class="small-button">Unlock all upgrades + skins</button><button id="admin-golden" class="small-button">Spawn golden cookie</button></div></div>
+        <div class="admin-section"><h3>💾 Game management</h3><p class="muted">Save the current game, or log out of the admin panel.</p><div class="admin-actions"><button id="admin-save" class="small-button">Save game now</button><button id="admin-logout" class="small-button danger">Lock admin panel</button></div></div>
+        <div class="admin-section"><h3>🧾 Admin activity</h3><div id="admin-log" class="admin-log"><p class="muted">Admin actions will appear here.</p></div></div>
+      </section>
+      <section id="tab-prestige" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">START OVER. COME BACK STRONGER.</span><h2>Rebirth chamber</h2></div><span class="pill">PRESTIGE</span></div>
+        <div class="prestige-art">✨</div>
+        <div class="prestige-stat"><span>Available prestige points</span><strong id="prestige-gain">0</strong></div>
+        <p class="muted">Rebirth resets your cookies, buildings and upgrades, but grants permanent prestige points. Each point boosts all cookie production by <strong>+10%</strong>. Prestige points and lifetime baked cookies are kept.</p>
+        <div class="prestige-next"><span>Current production bonus</span><strong id="prestige-bonus">+0%</strong></div>
+        <button id="rebirth-button" class="primary-button" disabled>✨ Rebirth (need 1 billion lifetime cookies)</button>
+        <small class="muted">You need at least 1 billion lifetime cookies to rebirth. More lifetime cookies means more points.</small>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer"><span>COOKIE INFINITE <b>v1.0</b></span><span>Made of pixels, powered by crumbs.</span><span id="footer-save">Your progress is saved in this browser.</span></footer>
+  <div id="toast-area" class="toast-area" aria-live="polite"></div>
+  <div id="admin-login-modal" class="modal-backdrop hidden">
+    <form id="admin-login-form" class="modal panel">
+      <div class="modal-icon">🛡️</div><h2>Admin access</h2><p>Enter the admin code to unlock the control room.</p>
+      <label class="login-label" for="admin-code">Admin code</label><input id="admin-code" class="admin-code-input" type="password" autocomplete="off" placeholder="Enter access code" required>
+      <p id="admin-login-error" class="login-error hidden">Incorrect code. Try again.</p>
+      <div class="modal-actions"><button type="button" id="cancel-admin-login" class="small-button">Cancel</button><button type="submit" class="primary-button login-submit">Unlock panel</button></div>
+    </form>
+  </div>
+  <div id="global-announcement" class="global-announcement hidden" role="status"><span>📢</span><div><strong>GLOBAL ANNOUNCEMENT</strong><p id="global-announcement-text"></p><small id="global-announcement-byline"></small></div><button id="dismiss-announcement" aria-label="Dismiss announcement">×</button></div>
+  <div id="confirm-modal" class="modal-backdrop hidden">
+    <div class="modal panel"><div class="modal-icon">⚠️</div><h2>Reset your bakery?</h2><p>This deletes your local save and starts a brand-new game. This cannot be undone.</p><div class="modal-actions"><button id="cancel-reset" class="small-button">Cancel</button><button id="confirm-reset" class="small-button danger">Delete save</button></div></div>
+  </div>
+  <!-- MULTI-ADMIN LIST -->
+<script>
+  window.COOKIE_INFINITE_ADMIN_USERNAMES = [
+    "Theee_Cash",
+    "ChakraCraft7",
+  ];
+</script>
+      
+  </script>
+  <script src="game.js"></script>
+</body>
+</html>
