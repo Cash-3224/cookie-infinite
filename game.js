@@ -5,6 +5,11 @@
   const SUPABASE_URL = "https://higsdxoctgstoyrvvids.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_f-U-p0OpH_ontauAcm-rWA_Wx8-ZPnH";
   const ADMIN_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-announcement`;
+  const AUTH_EMAIL_SUFFIX = "@accounts.cookieinfinite.local";
+  const authClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  let authUser = null;
+  let authProfile = null;
+  let authBusy = false;
   const PLAYER_USERNAME_KEY = "cookie_infinite_username_v1";
   const ADMIN_MESSAGE_KEY = "cookie_infinite_admin_announcement_v1";
   const ADMIN_USERNAMES = (Array.isArray(window.COOKIE_INFINITE_ADMIN_USERNAMES)
@@ -21,6 +26,10 @@
   let chatLoading = false;
   let lastChatMessageId = 0;
   let lastChatSendAt = 0;
+  let socialBusy = false;
+  let selectedDmFriend = null;
+  let socialRefreshBusy = false;
+  let lastDmMessageId = 0;
   const adminLogEntries = [];
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -269,18 +278,27 @@
   }
   function renderAll() { renderCounters();renderBuildings();renderUpgrades();renderAchievements();renderSkins();renderAdminMessage(); }
   function getPlayerUsername() {
-    try { return localStorage.getItem(PLAYER_USERNAME_KEY) || ""; } catch (e) { return ""; }
+    return authProfile?.username || "";
   }
-  function setPlayerUsername(value) {
+  async function setPlayerUsername(value) {
     const username = String(value || "").trim();
     if (!/^[A-Za-z0-9_]{3,16}$/.test(username)) {
       toast("Invalid username", "Use 3–16 letters, numbers, or underscores.");
       return false;
     }
-    try { localStorage.setItem(PLAYER_USERNAME_KEY, username); } catch (e) {}
-    renderPlayerUsername();
-    toast("Username saved", "Welcome, " + username + "!");
-    return true;
+    if (!authClient || !authUser) { showAccountModal(); return false; }
+    try {
+      const { data, error } = await authClient.from("cookie_profiles").update({ username }).eq("id", authUser.id).select("id,username").single();
+      if (error) throw error;
+      authProfile = data;
+      try { localStorage.setItem(PLAYER_USERNAME_KEY, username); } catch (e) {}
+      renderPlayerUsername();
+      toast("Username changed", "Your account username is now " + username + ".");
+      return true;
+    } catch (error) {
+      toast("Username not changed", /duplicate|unique/i.test(error.message || "") ? "That username is already taken." : (error.message || "Could not update your account."));
+      return false;
+    }
   }
   function isAuthorizedAdminUsername(username = getPlayerUsername()) {
     return ADMIN_USERNAMES.includes(String(username || "").trim().toLowerCase());
@@ -303,17 +321,19 @@
     if (el) el.textContent = "👤 " + (getPlayerUsername() || "Choose username");
     updateAdminVisibility();
   }
-  function openUsernameEditor() {
+  async function openUsernameEditor() {
     const current = getPlayerUsername();
-    const value = prompt("Choose your Cookie Infinite username (3–16 letters, numbers, or underscores):", current);
-    if (value !== null && setPlayerUsername(value)) saveGame();
+    const value = prompt("Change your account username (3–16 letters, numbers, or underscores):", current);
+    if (value !== null && await setPlayerUsername(value)) saveGame();
   }
   async function supabaseRequest(path, options = {}) {
+    const { data: sessionData } = authClient ? await authClient.auth.getSession() : { data: { session: null } };
+    const accessToken = sessionData?.session?.access_token;
     const response = await fetch(`${SUPABASE_URL}${path}`, {
       ...options,
       headers: {
         apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${accessToken || SUPABASE_PUBLISHABLE_KEY}`,
         "Content-Type": "application/json",
         ...(options.headers || {})
       }
@@ -354,12 +374,15 @@
     }
   }
   async function adminFunction(action, extra = {}) {
+    const { data: sessionData } = authClient ? await authClient.auth.getSession() : { data: { session: null } };
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) throw new Error("Sign in to your Cookie Infinite account first.");
     const response = await fetch(ADMIN_FUNCTION_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         apikey: SUPABASE_PUBLISHABLE_KEY,
-        Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`
+        Authorization: `Bearer ${accessToken}`
       },
       body: JSON.stringify({ action, adminCode: adminSessionCode, username: getPlayerUsername(), ...extra })
     });
@@ -427,7 +450,7 @@
   }
   async function sendGlobalChatMessage(message) {
     const username = getPlayerUsername();
-    if (!username) { openUsernameEditor(); return; }
+    if (!username || !authUser) { showAccountModal(); return; }
     const clean = String(message || "").trim();
     if (!clean || clean.length > 240) return;
     if (Date.now() - lastChatSendAt < 1500) { toast("Slow down", "Wait a moment before sending another message."); return; }
@@ -437,7 +460,7 @@
     try {
       await supabaseRequest("/rest/v1/global_chat_messages", {
         method: "POST", headers: { Prefer: "return=minimal" },
-        body: JSON.stringify({ username, message: clean })
+        body: JSON.stringify({ user_id: authUser.id, username, message: clean })
       });
       $("#chat-message").value = "";
       await loadGlobalChat();
@@ -446,6 +469,133 @@
       console.warn("Could not send chat message:", error.message);
     } finally { button.disabled = false; }
   }
+  function socialError(error, fallback) {
+    console.warn(fallback, error?.message || error);
+    toast(fallback, error?.message || "Run the updated Supabase SQL setup, then refresh.");
+  }
+  async function findProfileByUsername(username) {
+    const clean = String(username || "").trim();
+    const rows = await supabaseRequest(`/rest/v1/cookie_profiles?select=id,username&username=ilike.${encodeURIComponent(clean)}`, { method: "GET" });
+    return Array.isArray(rows) ? rows.find(row => String(row.username).toLowerCase() === clean.toLowerCase()) || null : null;
+  }
+  function renderSocialCards(target, rows, emptyText, renderer) {
+    const el = $(target);
+    if (!el) return;
+    el.innerHTML = rows.length ? rows.map(renderer).join("") : `<p class="social-empty">${escapeHtml(emptyText)}</p>`;
+  }
+  async function loadFriendRequests() {
+    if (!authUser || !authProfile || socialRefreshBusy) return;
+    socialRefreshBusy = true;
+    try {
+      const [incoming, outgoing, accepted] = await Promise.all([
+        supabaseRequest(`/rest/v1/cookie_friend_requests?select=id,sender_id,receiver_id,status,created_at,sender:cookie_profiles!cookie_friend_requests_sender_id_fkey(id,username)&receiver_id=eq.${authUser.id}&status=eq.pending&order=created_at.desc`, { method: "GET" }),
+        supabaseRequest(`/rest/v1/cookie_friend_requests?select=id,sender_id,receiver_id,status,created_at,receiver:cookie_profiles!cookie_friend_requests_receiver_id_fkey(id,username)&sender_id=eq.${authUser.id}&status=eq.pending&order=created_at.desc`, { method: "GET" }),
+        supabaseRequest(`/rest/v1/cookie_friend_requests?select=id,sender_id,receiver_id,status,created_at,sender:cookie_profiles!cookie_friend_requests_sender_id_fkey(id,username),receiver:cookie_profiles!cookie_friend_requests_receiver_id_fkey(id,username)&status=eq.accepted&or=(sender_id.eq.${authUser.id},receiver_id.eq.${authUser.id})&order=created_at.desc`, { method: "GET" })
+      ]);
+      const inRows = Array.isArray(incoming) ? incoming : [];
+      const outRows = Array.isArray(outgoing) ? outgoing : [];
+      const friends = Array.isArray(accepted) ? accepted.map(row => {
+        const profile = row.sender_id === authUser.id ? row.receiver : row.sender;
+        return profile ? { id: profile.id, username: profile.username } : null;
+      }).filter(Boolean) : [];
+      const badge = $("#friend-request-badge");
+      if (badge) { badge.textContent = String(inRows.length); badge.classList.toggle("hidden", inRows.length === 0); }
+      const count = $("#friend-request-count"); if (count) count.textContent = `${inRows.length} pending`;
+      renderSocialCards("#incoming-friend-requests", inRows, "No incoming requests right now.", row => `<article class="social-card"><div class="social-card-info"><strong>${escapeHtml(row.sender?.username || "Player")}</strong><small>Wants to be your friend</small></div><div class="social-card-actions"><button class="buy-button" data-friend-action="accept" data-request-id="${row.id}">Accept</button><button class="small-button danger" data-friend-action="decline" data-request-id="${row.id}">Decline</button></div></article>`);
+      renderSocialCards("#outgoing-friend-requests", outRows, "No pending sent requests.", row => `<article class="social-card"><div class="social-card-info"><strong>${escapeHtml(row.receiver?.username || "Player")}</strong><small>Request pending</small></div><div class="social-card-actions"><button class="small-button" data-friend-action="cancel" data-request-id="${row.id}">Cancel</button></div></article>`);
+      renderSocialCards("#friends-list", friends, "Accept a request to add your first friend.", friend => `<article class="social-card"><div class="social-card-info"><strong>${escapeHtml(friend.username)}</strong><small>Friend</small></div><div class="social-card-actions"><button class="buy-button" data-open-dm="${friend.id}" data-friend-name="${escapeHtml(friend.username)}">Message</button></div></article>`);
+      renderSocialCards("#dm-friends", friends, "Accept a friend request to start chatting.", friend => `<button type="button" class="dm-friend-button ${selectedDmFriend?.id === friend.id ? "active" : ""}" data-open-dm="${friend.id}" data-friend-name="${escapeHtml(friend.username)}">💬 ${escapeHtml(friend.username)}</button>`);
+      if (selectedDmFriend && !friends.some(friend => friend.id === selectedDmFriend.id)) {
+        selectedDmFriend = null;
+        renderDmSelection();
+      }
+    } catch (error) {
+      socialError(error, "Could not load friends");
+      ["#incoming-friend-requests", "#outgoing-friend-requests", "#friends-list", "#dm-friends"].forEach(sel => { const el = $(sel); if (el) el.innerHTML = '<p class="social-empty">Friend features need the updated Supabase SQL setup.</p>'; });
+    } finally { socialRefreshBusy = false; }
+  }
+  async function sendFriendRequest(username) {
+    if (!authUser || !authProfile) { showAccountModal(); return; }
+    const clean = String(username || "").trim();
+    if (!/^[A-Za-z0-9_]{3,16}$/.test(clean)) { toast("Check the username", "Use 3–16 letters, numbers, or underscores."); return; }
+    if (clean.toLowerCase() === getPlayerUsername().toLowerCase()) { toast("Can't add yourself", "Enter another player's username."); return; }
+    const button = $("#send-friend-request"); if (button) button.disabled = true;
+    try {
+      const target = await findProfileByUsername(clean);
+      if (!target) throw new Error("No account found with that exact username.");
+      const existing = await supabaseRequest(`/rest/v1/cookie_friend_requests?select=id,status,sender_id,receiver_id&or=(and(sender_id.eq.${authUser.id},receiver_id.eq.${target.id}),and(sender_id.eq.${target.id},receiver_id.eq.${authUser.id}))&limit=1`, { method: "GET" });
+      if (Array.isArray(existing) && existing.length) {
+        const row = existing[0];
+        if (row.status === "accepted") throw new Error("You're already friends with this player.");
+        if (row.status === "pending") throw new Error(row.sender_id === authUser.id ? "You already sent a request to this player." : "This player already sent you a request. Check Friend Rq.");
+      }
+      await supabaseRequest("/rest/v1/cookie_friend_requests", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ sender_id: authUser.id, receiver_id: target.id, status: "pending" }) });
+      $("#friend-username").value = "";
+      toast("Friend request sent", `${target.username} can accept it in Friend Rq.`);
+      await loadFriendRequests();
+    } catch (error) { socialError(error, "Friend request failed"); }
+    finally { if (button) button.disabled = false; }
+  }
+  async function handleFriendRequestAction(action, requestId) {
+    if (!authUser) return;
+    try {
+      if (action === "accept") {
+        await supabaseRequest(`/rest/v1/cookie_friend_requests?id=eq.${requestId}&receiver_id=eq.${authUser.id}&status=eq.pending`, { method: "PATCH", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ status: "accepted", responded_at: new Date().toISOString() }) });
+        toast("Friend added", "You can now chat privately in DM's.");
+      } else if (action === "decline") {
+        await supabaseRequest(`/rest/v1/cookie_friend_requests?id=eq.${requestId}&receiver_id=eq.${authUser.id}&status=eq.pending`, { method: "DELETE", headers: { Prefer: "return=minimal" } });
+        toast("Request declined", "The request was removed.");
+      } else if (action === "cancel") {
+        await supabaseRequest(`/rest/v1/cookie_friend_requests?id=eq.${requestId}&sender_id=eq.${authUser.id}&status=eq.pending`, { method: "DELETE", headers: { Prefer: "return=minimal" } });
+        toast("Request cancelled", "Your pending request was removed.");
+      }
+      await loadFriendRequests();
+    } catch (error) { socialError(error, "Could not update friend request"); }
+  }
+  function renderDmSelection() {
+    const name = selectedDmFriend?.username || "Choose a friend";
+    const label = $("#dm-current-friend"); if (label) label.textContent = name;
+    const input = $("#dm-message"), send = $("#dm-send");
+    if (input) { input.disabled = !selectedDmFriend; input.placeholder = selectedDmFriend ? `Message ${name} privately…` : "Choose a friend first…"; }
+    if (send) send.disabled = !selectedDmFriend;
+    const messages = $("#dm-messages"); if (messages && !selectedDmFriend) messages.innerHTML = '<p class="chat-empty">Choose a friend to open a conversation.</p>';
+    $$(".dm-friend-button").forEach(btn => btn.classList.toggle("active", btn.dataset.openDm === selectedDmFriend?.id));
+    if (selectedDmFriend) loadDirectMessages();
+  }
+  async function openDirectMessage(friendId, friendName) {
+    if (!authUser) { showAccountModal(); return; }
+    selectedDmFriend = { id: friendId, username: friendName || "Friend" };
+    showTab("dms");
+    renderDmSelection();
+    await loadDirectMessages();
+  }
+  async function loadDirectMessages() {
+    if (!authUser || !selectedDmFriend) return;
+    try {
+      const otherId = selectedDmFriend.id;
+      const rows = await supabaseRequest(`/rest/v1/cookie_direct_messages?select=id,sender_id,recipient_id,sender_username,message,created_at&or=(and(sender_id.eq.${authUser.id},recipient_id.eq.${otherId}),and(sender_id.eq.${otherId},recipient_id.eq.${authUser.id}))&order=id.asc&limit=100`, { method: "GET" });
+      const list = Array.isArray(rows) ? rows : [];
+      const container = $("#dm-messages"); if (!container) return;
+      if (!list.length) container.innerHTML = '<p class="chat-empty">No messages yet. Say hello! 🔐</p>';
+      else {
+        container.innerHTML = list.map(row => `<article class="chat-message dm-message ${row.sender_id === authUser.id ? "own" : ""}"><div class="chat-message-top"><strong class="dm-sender">${escapeHtml(row.sender_id === authUser.id ? "You" : row.sender_username || selectedDmFriend.username)}</strong><time class="dm-time">${escapeHtml(new Date(row.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}))}</time></div><p>${escapeHtml(row.message || "")}</p></article>`).join("");
+        container.scrollTop = container.scrollHeight;
+        lastDmMessageId = Math.max(lastDmMessageId, ...list.map(row => Number(row.id) || 0));
+      }
+    } catch (error) { const container = $("#dm-messages"); if (container) container.innerHTML = '<p class="chat-empty">DMs need the updated Supabase SQL setup.</p>'; console.warn("Could not load direct messages:", error.message); }
+  }
+  async function sendDirectMessage(message) {
+    if (!authUser || !authProfile || !selectedDmFriend) { showAccountModal(); return; }
+    const clean = String(message || "").trim(); if (!clean || clean.length > 1000) return;
+    const button = $("#dm-send"); if (button) button.disabled = true;
+    try {
+      await supabaseRequest("/rest/v1/cookie_direct_messages", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ sender_id: authUser.id, recipient_id: selectedDmFriend.id, sender_username: getPlayerUsername(), message: clean }) });
+      $("#dm-message").value = "";
+      await loadDirectMessages();
+    } catch (error) { socialError(error, "Private message not sent"); }
+    finally { if (button) button.disabled = !selectedDmFriend; }
+  }
+
   function addAdminLog(message) {
     adminLogEntries.unshift({ time: new Date().toLocaleTimeString(), message });
     adminLogEntries.splice(12);
@@ -509,6 +659,8 @@
   $$(".tab").forEach(btn=>btn.addEventListener("click",()=>{
     if(btn.dataset.tab === "admin" && (!adminUnlocked || !isAuthorizedAdminUsername())) return;
     showTab(btn.dataset.tab);
+    if (btn.dataset.tab === "friend-requests" || btn.dataset.tab === "dms") loadFriendRequests();
+    if (btn.dataset.tab === "dms" && selectedDmFriend) loadDirectMessages();
   }));
   $("#admin-open").addEventListener("click", openAdminPanel);
   $("#cancel-admin-login").addEventListener("click", () => $("#admin-login-modal").classList.add("hidden"));
@@ -582,6 +734,12 @@
     } catch (error) { toast("Could not deactivate boosts", error.message + ". Update and deploy the Edge Function first."); }
     finally { button.disabled = false; }
   });
+  $("#friend-request-form")?.addEventListener("submit", event => { event.preventDefault(); sendFriendRequest($("#friend-username").value); });
+  $("#incoming-friend-requests")?.addEventListener("click", event => { const button = event.target.closest("[data-friend-action]"); if (button) handleFriendRequestAction(button.dataset.friendAction, button.dataset.requestId); });
+  $("#outgoing-friend-requests")?.addEventListener("click", event => { const button = event.target.closest("[data-friend-action]"); if (button) handleFriendRequestAction(button.dataset.friendAction, button.dataset.requestId); });
+  $("#friends-list")?.addEventListener("click", event => { const button = event.target.closest("[data-open-dm]"); if (button) openDirectMessage(button.dataset.openDm, button.dataset.friendName); });
+  $("#dm-friends")?.addEventListener("click", event => { const button = event.target.closest("[data-open-dm]"); if (button) openDirectMessage(button.dataset.openDm, button.dataset.friendName); });
+  $("#dm-form")?.addEventListener("submit", event => { event.preventDefault(); sendDirectMessage($("#dm-message").value); });
   $("#chat-form").addEventListener("submit", e => {
     e.preventDefault();
     sendGlobalChatMessage($("#chat-message").value);
@@ -619,14 +777,82 @@
   window.addEventListener("beforeunload",()=>saveGame());
   document.addEventListener("visibilitychange",()=>{if(document.hidden)saveGame();});
 
+  function showAccountModal(message = "") {
+    const modal = $("#account-modal");
+    if (!modal) return;
+    modal.classList.remove("hidden");
+    const error = $("#account-error");
+    if (error) { error.textContent = message; error.classList.toggle("hidden", !message); }
+    $("#account-password").value = "";
+  }
+  function hideAccountModal() { $("#account-modal")?.classList.add("hidden"); }
+  function accountEmail(username) { return String(username).trim().toLowerCase() + AUTH_EMAIL_SUFFIX; }
+  async function loadAuthenticatedProfile() {
+    const { data: sessionData, error: sessionError } = await authClient.auth.getSession();
+    if (sessionError) throw sessionError;
+    const session = sessionData.session;
+    if (!session) { authUser = null; authProfile = null; return false; }
+    authUser = session.user;
+    const { data, error } = await authClient.from("cookie_profiles").select("id,username").eq("id", authUser.id).single();
+    if (error) throw error;
+    authProfile = data;
+    try { localStorage.setItem(PLAYER_USERNAME_KEY, data.username); } catch (e) {}
+    renderPlayerUsername();
+    hideAccountModal();
+    return true;
+  }
+  async function runAccountAction(mode) {
+    if (authBusy) return;
+    if (!authClient) { showAccountModal("The Supabase Auth library failed to load. Check your internet connection and refresh."); return; }
+    const username = $("#account-username").value.trim();
+    const password = $("#account-password").value;
+    const errorEl = $("#account-error");
+    if (!/^[A-Za-z0-9_]{3,16}$/.test(username)) { showAccountModal("Username must be 3–16 letters, numbers, or underscores."); return; }
+    if (password.length < 8) { showAccountModal("Password must be at least 8 characters."); return; }
+    authBusy = true;
+    $("#account-signin").disabled = $("#account-signup").disabled = true;
+    try {
+      if (mode === "signup") {
+        const { data, error } = await authClient.auth.signUp({ email: accountEmail(username), password, options: { data: { username } } });
+        if (error) throw error;
+        if (!data.session) throw new Error("Account created, but Supabase requires email confirmation. In Supabase Auth settings, disable Confirm email for this username-only login setup, then try again.");
+      } else {
+        const { error } = await authClient.auth.signInWithPassword({ email: accountEmail(username), password });
+        if (error) throw error;
+      }
+      const loaded = await loadAuthenticatedProfile();
+      if (!loaded) throw new Error("Sign-in did not create a session. Check Supabase Auth settings.");
+      toast(mode === "signup" ? "Account created" : "Welcome back", "Signed in as " + getPlayerUsername() + ".");
+      loadGlobalChat();
+      loadFriendRequests();
+    } catch (error) {
+      showAccountModal(error.message || "Could not sign in. Please try again.");
+    } finally {
+      authBusy = false;
+      $("#account-signin").disabled = $("#account-signup").disabled = false;
+    }
+  }
+  $("#account-signin")?.addEventListener("click", () => runAccountAction("signin"));
+  $("#account-signup")?.addEventListener("click", () => runAccountAction("signup"));
+  $("#account-form")?.addEventListener("submit", event => { event.preventDefault(); runAccountAction("signin"); });
+  authClient?.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT" || !session) { authUser = null; authProfile = null; selectedDmFriend = null; adminUnlocked = false; adminSessionCode = ""; renderPlayerUsername(); showAccountModal(); }
+    else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") { setTimeout(() => { loadAuthenticatedProfile().then(loaded => { if (loaded) loadFriendRequests(); }).catch(() => {}); }, 0); }
+  });
+
   loadGame();
   if(!state.goldenNext||state.goldenNext<Date.now())state.goldenNext=Date.now()+20000;
   renderAll();
   renderPlayerUsername();
   updateAdminVisibility();
-  if (!getPlayerUsername() && !usernamePromptShown) {
-    usernamePromptShown = true;
-    setTimeout(openUsernameEditor, 800);
+  showAccountModal();
+  if (authClient) {
+    loadAuthenticatedProfile().then(loaded => {
+      if (loaded) { loadGlobalAnnouncement(); loadGlobalMultipliers(); loadGlobalChat(); loadFriendRequests(); }
+      else showAccountModal();
+    }).catch(error => { console.warn("Account profile unavailable:", error.message); showAccountModal("Account setup is not finished. Run the supplied Supabase SQL, then refresh."); });
+  } else {
+    showAccountModal("Supabase Auth could not load. Check your internet connection.");
   }
   loadGlobalAnnouncement();
   loadGlobalMultipliers();
@@ -634,6 +860,8 @@
   setInterval(loadGlobalAnnouncement, 15000);
   setInterval(loadGlobalMultipliers, 5000);
   setInterval(loadGlobalChat, 5000);
+  setInterval(loadFriendRequests, 12000);
+  setInterval(() => { if (selectedDmFriend && !document.hidden) loadDirectMessages(); }, 4000);
   setInterval(tick,100);
   setInterval(()=>saveGame(),10000);
   setTimeout(()=>toast("Welcome to Cookie Infinite","Click the giant cookie to start your empire!"),600);

@@ -70,6 +70,8 @@
         <button class="tab" data-tab="achievements">🏆 <span>Trophies</span></button>
         <button class="tab" data-tab="skins">🎨 <span>Skins</span></button>
         <button class="tab" data-tab="prestige">✨ <span>Rebirth</span></button>
+        <button class="tab social-tab" data-tab="friend-requests">👥 <span>Friend Rq</span><i id="friend-request-badge" class="tab-badge hidden">0</i></button>
+        <button class="tab social-tab" data-tab="dms">💬 <span>DM's</span><i id="dm-unread-badge" class="tab-badge hidden">!</i></button>
         <button id="admin-tab-button" class="tab admin-tab hidden" data-tab="admin">🛡️ <span>Admin</span></button>
       </nav>
       <section id="tab-shop" class="tab-content panel">
@@ -89,6 +91,19 @@
       <section id="tab-skins" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">LOOK FRESH WHILE YOU BAKE</span><h2>Cookie skins</h2></div><span class="pill" id="skin-owned">1 owned</span></div>
         <div id="skin-list" class="skin-list"></div>
+      </section>
+      <section id="tab-friend-requests" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">FIND YOUR BAKING CREW</span><h2>👥 Friend Requests</h2></div><span class="pill" id="friend-request-count">0 pending</span></div>
+        <p class="muted">Enter a player's exact username to send a request. They will see it here and can accept or decline.</p>
+        <form id="friend-request-form" class="social-form"><label for="friend-username">Username</label><div class="social-inline"><input id="friend-username" type="text" minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="Enter exact username" required><button class="primary-button" id="send-friend-request" type="submit">Send request</button></div></form>
+        <div class="social-subsection"><h3>📥 Incoming requests</h3><div id="incoming-friend-requests" class="social-list"><p class="chat-empty">Sign in to load requests.</p></div></div>
+        <div class="social-subsection"><h3>📤 Sent requests</h3><div id="outgoing-friend-requests" class="social-list"><p class="chat-empty">No sent requests.</p></div></div>
+        <div class="social-subsection"><h3>💚 Friends</h3><div id="friends-list" class="social-list"><p class="chat-empty">Accepted friends appear here.</p></div></div>
+      </section>
+      <section id="tab-dms" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">PRIVATE CONVERSATIONS</span><h2>💬 DM's</h2></div><span class="pill" id="dm-current-friend">Choose a friend</span></div>
+        <p class="muted">You can only message players who have accepted your friend request. Conversations are private to their two participants.</p>
+        <div class="dm-layout"><aside><h3>Your friends</h3><div id="dm-friends" class="social-list"><p class="chat-empty">Accept a friend request to start chatting.</p></div></aside><div class="dm-conversation"><div id="dm-messages" class="chat-messages dm-messages"><p class="chat-empty">Choose a friend to open a conversation.</p></div><form id="dm-form" class="chat-form"><label class="sr-only" for="dm-message">Write a private message</label><input id="dm-message" type="text" maxlength="1000" autocomplete="off" placeholder="Write a private message…" required disabled><button id="dm-send" class="buy-button" type="submit" disabled>Send</button></form></div></div>
       </section>
       <section id="tab-admin" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">RESTRICTED CONTROL ROOM</span><h2>🛡️ Admin panel</h2></div><span class="pill admin-pill">ADMIN ACCESS</span></div>
@@ -131,15 +146,29 @@
   <div id="confirm-modal" class="modal-backdrop hidden">
     <div class="modal panel"><div class="modal-icon">⚠️</div><h2>Reset your bakery?</h2><p>This deletes your local save and starts a brand-new game. This cannot be undone.</p><div class="modal-actions"><button id="cancel-reset" class="small-button">Cancel</button><button id="confirm-reset" class="small-button danger">Delete save</button></div></div>
   </div>
-  <!-- MULTI-ADMIN LIST -->
-<script>
-  window.COOKIE_INFINITE_ADMIN_USERNAMES = [
-    "Theee_Cash",
-    "ChakraCraft7",
-  ];
-</script>
-      
+  <!-- MULTI-ADMIN LIST: add each authorized username below. Only listed usernames see the Admin buttons. Also add the same names to Supabase secret COOKIE_ADMIN_USERNAMES and redeploy the Edge Function. -->
+  <script>
+    window.COOKIE_INFINITE_ADMIN_USERNAMES = [
+      "Theee_Cash",
+      // Add more authorized usernames by uncommenting/editing these examples:
+      // "AnotherAdmin",
+      // "ThirdAdmin",
+    ];
   </script>
+  <div id="account-modal" class="modal-backdrop account-backdrop" role="dialog" aria-modal="true" aria-labelledby="account-title">
+    <form id="account-form" class="modal panel account-modal">
+      <div class="modal-icon">🍪🔐</div><h2 id="account-title">Cookie Infinite Account</h2>
+      <p id="account-description">Create an account or sign in. Your username belongs to your account.</p>
+      <label class="login-label" for="account-username">Username</label>
+      <input id="account-username" class="account-input" type="text" minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" autocomplete="username" placeholder="3–16 letters, numbers, _" required>
+      <label class="login-label" for="account-password">Password</label>
+      <input id="account-password" class="account-input" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters" required>
+      <p id="account-error" class="login-error hidden"></p>
+      <div class="account-buttons"><button id="account-signin" class="primary-button" type="button">Sign in</button><button id="account-signup" class="small-button" type="button">Create account</button></div>
+      <small class="account-note">Use a unique password. Passwords are handled by Supabase Auth, not stored in your game files.</small>
+    </form>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="game.js"></script>
 </body>
 </html>
