@@ -65,8 +65,7 @@
 
     <section class="right-column">
       <nav class="tabs panel" aria-label="Game sections">
-        <button class="tab active" data-tab="shop">🏭 <span>Shop</span></button>
-        <button class="tab" data-tab="upgrades">⚡ <span>Upgrades</span><i id="upgrade-badge" class="tab-badge hidden">!</i></button>
+        <button class="tab active" data-tab="upgrades">⚡ <span>Upgrades</span><i id="upgrade-badge" class="tab-badge hidden">!</i></button>
         <button class="tab" data-tab="achievements">🏆 <span>Trophies</span></button>
         <button class="tab" data-tab="skins">🎨 <span>Skins</span></button>
         <button class="tab" data-tab="prestige">✨ <span>Rebirth</span></button>
@@ -74,13 +73,14 @@
         <button class="tab social-tab" data-tab="dms">💬 <span>DM's</span><i id="dm-unread-badge" class="tab-badge hidden">!</i></button>
         <button id="admin-tab-button" class="tab admin-tab hidden" data-tab="admin">🛡️ <span>Admin</span></button>
       </nav>
-      <section id="tab-shop" class="tab-content panel">
-        <div class="section-heading"><div><span class="eyebrow">BUILD YOUR EMPIRE</span><h2>Cookie shop</h2></div><span class="pill" id="shop-owned">0 owned</span></div>
-        <div id="building-list" class="building-list"></div>
-      </section>
-      <section id="tab-upgrades" class="tab-content panel hidden">
+      <section id="tab-upgrades" class="tab-content panel">
         <div class="section-heading"><div><span class="eyebrow">MAKE EVERY CRUMB COUNT</span><h2>Upgrades</h2></div><span class="pill" id="upgrade-count">0 unlocked</span></div>
-        <p class="muted intro">Permanent boosts that stack with your buildings and prestige.</p>
+        <p class="muted intro">Buy repeatable per-click and CPS boosts, unlock permanent upgrades, and build your bakery here.</p>
+        <div class="upgrade-subheading"><h3>⚡ Repeatable boosts</h3><p class="muted">These can be purchased again and again. Each purchase gets more expensive.</p></div>
+        <div id="repeatable-upgrade-list" class="upgrade-list"></div>
+        <div class="upgrade-subheading"><h3>🏭 Production buildings</h3><span class="pill" id="shop-owned">0 owned</span></div>
+        <div id="building-list" class="building-list"></div>
+        <div class="upgrade-subheading"><h3>✨ Special upgrades</h3></div>
         <div id="upgrade-list" class="upgrade-list"></div>
       </section>
       <section id="tab-achievements" class="tab-content panel hidden">
