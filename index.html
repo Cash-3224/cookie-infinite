@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#130d0a">
   <title>Cookie Clicker: Infinite</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20261025-3">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -57,12 +57,12 @@
         <button class="tab" data-tab="achievements">🏆 <span>Trophies</span></button>
         <button class="tab" data-tab="skins">🎨 <span>Skins</span></button>
         <button class="tab" data-tab="prestige">✨ <span>Rebirth</span></button>
-        <button class="tab" data-tab="trading">🔁 <span>Trading</span></button>
+        <button class="tab trading-tab" data-tab="trading">🔁 <span>Trading</span></button>
         <button id="admin-tab-button" class="tab admin-tab hidden" data-tab="admin">🛡️ <span>Admin</span></button>
       </nav>
       <section id="tab-upgrades" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">MAKE EVERY CRUMB COUNT</span><h2>Upgrades</h2></div><span class="pill" id="upgrade-count">0 unlocked</span></div>
-        <p class="muted intro">Choose a category. Buildings and production boosts are under CPS.</p>
+        <p class="muted intro">Choose a category. Each category has exactly 90 permanent upgrades. No temporary boosts.</p>
         <div class="upgrade-subtabs" role="tablist" aria-label="Upgrade categories">
           <button class="upgrade-subtab active" data-upgrade-category="cps">⚡ CPS</button>
           <button class="upgrade-subtab" data-upgrade-category="click">👆 Per Click</button>
@@ -70,11 +70,11 @@
         <div id="upgrade-cps-panel" class="upgrade-category-panel">
           <div class="upgrade-subheading"><h3>🏭 CPS Buildings</h3><span class="muted">Buy more automatic production</span></div>
           <div id="building-list" class="building-list"></div>
-          <div class="upgrade-subheading"><h3>⚡ CPS Boosts</h3><span class="muted">Multiply your cookie production</span></div>
+          <div class="upgrade-subheading"><h3>⚡ CPS Upgrades <span class="upgrade-total">90</span></h3><span class="muted">90 permanent production upgrades</span></div>
           <div id="upgrade-cps-list" class="upgrade-list"></div>
         </div>
         <div id="upgrade-click-panel" class="upgrade-category-panel hidden">
-          <div class="upgrade-subheading"><h3>👆 Per Click Boosts</h3><span class="muted">Make every click stronger</span></div>
+          <div class="upgrade-subheading"><h3>👆 Per Click Upgrades <span class="upgrade-total">90</span></h3><span class="muted">90 permanent click upgrades</span></div>
           <div id="upgrade-click-list" class="upgrade-list"></div>
         </div>
       </section>
@@ -89,10 +89,10 @@
       </section>
       <section id="tab-trading" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">PLAYER-TO-PLAYER EXCHANGE</span><h2>🔁 Trading</h2></div><span class="pill">TRADE HUB</span></div>
-        <div class="admin-warning">Trading needs a deployed Supabase backend and authenticated player accounts. This package includes a secure database setup template; transfers will not be enabled until the setup in README.txt is completed.</div>
-        <div class="admin-section"><h3>🍪 Transfer cookies</h3><label for="trade-recipient">Recipient username</label><input id="trade-recipient" type="text" maxlength="16" placeholder="Player username"><label for="trade-cookie-amount">Cookies to transfer</label><input id="trade-cookie-amount" type="number" min="1" step="1" placeholder="Amount"><button id="trade-cookie-send" class="primary-button" type="button" disabled>Transfer cookies (backend setup required)</button></div>
-        <div class="admin-section"><h3>🎨 Trade a skin</h3><label for="trade-skin-recipient">Recipient username</label><input id="trade-skin-recipient" type="text" maxlength="16" placeholder="Player username"><label for="trade-skin-select">Skin you own</label><select id="trade-skin-select"><option value="">Choose a skin</option></select><button id="trade-skin-send" class="primary-button" type="button" disabled>Trade skin (backend setup required)</button></div>
-        <div class="admin-section"><h3>📜 Trading rules</h3><p class="muted">Only trade skins you own. Cookie transfers must be positive, and the sender must have enough cookies. Server-side checks are required to prevent forged balances and duplicate transfers.</p></div>
+        <div class="trade-intro"><span class="trade-intro-icon">🔒</span><div><strong>Trading setup</strong><p>Player-to-player transfers unlock after the Supabase trading backend is configured. Your trade options are organized below.</p></div><span class="trade-status">SETUP REQUIRED</span></div>
+        <div class="admin-section"><h3>🍪 Transfer cookies</h3><label for="trade-recipient">Recipient username</label><input id="trade-recipient" type="text" maxlength="16" placeholder="Player username"><label for="trade-cookie-amount">Cookies to transfer</label><input id="trade-cookie-amount" type="number" min="1" step="1" placeholder="Amount"><button id="trade-cookie-send" class="primary-button" type="button" disabled>Transfer cookies</button></div>
+        <div class="admin-section"><h3>🎨 Trade a skin</h3><label for="trade-skin-recipient">Recipient username</label><input id="trade-skin-recipient" type="text" maxlength="16" placeholder="Player username"><label for="trade-skin-select">Skin you own</label><select id="trade-skin-select"><option value="">Choose a skin</option></select><button id="trade-skin-send" class="primary-button" type="button" disabled>Trade skin</button></div>
+        <div class="admin-section"><h3>📜 Trading rules</h3><p class="muted">Only skins you own can be traded. Cookie transfers must be positive and within your balance. Server-side checks protect balances and prevent duplicate transfers.</p></div>
       </section>
       <section id="tab-admin" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">RESTRICTED CONTROL ROOM</span><h2>🛡️ Admin panel</h2></div><span class="pill admin-pill">ADMIN ACCESS</span></div>
@@ -106,7 +106,7 @@
         <div class="section-heading"><div><span class="eyebrow">START OVER. COME BACK STRONGER.</span><h2>Rebirth chamber</h2></div><span class="pill">PRESTIGE</span></div>
         <div class="prestige-art">✨</div>
         <div class="prestige-stat"><span>Available prestige points</span><strong id="prestige-gain">0</strong></div>
-        <p class="muted">Rebirth resets your cookies, buildings and upgrades, but grants permanent prestige points. Each point boosts all cookie production by <strong>+10%</strong>. Prestige points and lifetime baked cookies are kept.</p>
+        <p class="muted">Rebirth resets your cookies, buildings and upgrades, but grants permanent prestige points. Each point increases all cookie production by <strong>+10%</strong>. Prestige points and lifetime baked cookies are kept.</p>
         <div class="prestige-next"><span>Current production bonus</span><strong id="prestige-bonus">+0%</strong></div>
         <button id="rebirth-button" class="primary-button" disabled>✨ Rebirth (need 1 billion lifetime cookies)</button>
         <small class="muted">You need at least 1 billion lifetime cookies to rebirth. More lifetime cookies means more points.</small>
@@ -128,6 +128,6 @@
   <div id="confirm-modal" class="modal-backdrop hidden">
     <div class="modal panel"><div class="modal-icon">⚠️</div><h2>Reset your bakery?</h2><p>This deletes your local save and starts a brand-new game. This cannot be undone.</p><div class="modal-actions"><button id="cancel-reset" class="small-button">Cancel</button><button id="confirm-reset" class="small-button danger">Delete save</button></div></div>
   </div>
-  <script src="game.js"></script>
+  <script src="game.js?v=20261025-3"></script>
 </body>
 </html>

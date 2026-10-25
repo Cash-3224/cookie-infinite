@@ -33,21 +33,24 @@
     { id: "multiverse", name: "Multiverse engine", icon: "♾️", base: 26000000000000000, cps: 21000000000, desc: "Every possible timeline bakes cookies." }
   ];
 
-  const upgrades = [
-    { id:"strong-fingers", name:"Strong fingers", icon:"💪", cost:100, desc:"+1 cookie per click.", click:1 },
-    { id:"double-click", name:"Double click", icon:"🖱️", cost:500, desc:"Click power x2.", clickMult:2 },
-    { id:"biscuit-science", name:"Biscuit science", icon:"🧪", cost:2500, desc:"All production +25%.", mult:1.25 },
-    { id:"grandma-recipe", name:"Grandma's secret recipe", icon:"📜", cost:10000, desc:"All production x1.5.", mult:1.5 },
-    { id:"golden-touch", name:"Golden touch", icon:"✨", cost:50000, desc:"Golden cookies give 3x bigger rewards.", golden:3 },
-    { id:"turbo-fingers", name:"Turbo fingers", icon:"⚡", cost:250000, desc:"Click power x5.", clickMult:5 },
-    { id:"cookie-reactor", name:"Cookie reactor", icon:"☢️", cost:1500000, desc:"All production x2.", mult:2 },
-    { id:"cosmic-recipe", name:"Cosmic recipe", icon:"🌌", cost:15000000, desc:"All production x3.", mult:3 },
-    { id:"lucky-crumb", name:"Lucky crumb", icon:"🍀", cost:100000000, desc:"Golden cookie rewards x5.", golden:5 },
-    { id:"quantum-oven", name:"Quantum oven", icon:"🌀", cost:1000000000, desc:"All production x5.", mult:5 },
-    { id:"infinite-dough", name:"Infinite dough", icon:"♾️", cost:100000000000, desc:"All production x10.", mult:10 },
-    { id:"reality-bender", name:"Reality bender", icon:"🪄", cost:10000000000000, desc:"All production x25.", mult:25 },
-    { id:"multiversal-mix", name:"Multiversal mix", icon:"💫", cost:1000000000000000, desc:"All production x50.", mult:50 }
-  ];
+  const upgradeIcons = ["🍪","🧁","🍫","🥨","🍩","🥮","🍰","🥠","🍯","🥛","🧈","🌾"];
+  const cpsUpgradeNames = ["Crumb Collector","Cookie Conveyor","Sugar Engine","Biscuit Workshop","Dough Dynamo","Chocolate Mill","Golden Bakery","Crumb Reactor","Cookie Foundry","Pastry Network","Sugar Refinery","Baking Satellite"];
+  const clickUpgradeNames = ["Gentle Tap","Quick Fingers","Cookie Grip","Precision Click","Double Knuckle","Turbo Tap","Sugar Rush Technique","Golden Touch Technique","Rapid Crumble","Master Baker Click"];
+  const upgrades = [];
+  for (let i = 1; i <= 90; i++) {
+    const tier = Math.floor((i - 1) / 12) + 1;
+    const within = ((i - 1) % 12) + 1;
+    const cost = Math.ceil(25 * Math.pow(1.72, i - 1));
+    const cpsBonus = Number((0.2 * Math.pow(1.52, i - 1)).toPrecision(5));
+    upgrades.push({ id:`cps-upgrade-${i}`, category:"cps", name:`${cpsUpgradeNames[(i - 1) % cpsUpgradeNames.length]} ${tier}-${within}`, icon:upgradeIcons[(i - 1) % upgradeIcons.length], cost, desc:`Adds ${cpsBonus.toLocaleString("en-US")} cookies per second.`, cpsBonus });
+  }
+  for (let i = 1; i <= 90; i++) {
+    const tier = Math.floor((i - 1) / 10) + 1;
+    const within = ((i - 1) % 10) + 1;
+    const cost = Math.ceil(40 * Math.pow(1.78, i - 1));
+    const clickBonus = Number((1 * Math.pow(1.43, i - 1)).toPrecision(5));
+    upgrades.push({ id:`click-upgrade-${i}`, category:"click", name:`${clickUpgradeNames[(i - 1) % clickUpgradeNames.length]} ${tier}-${within}`, icon:upgradeIcons[(i + 4) % upgradeIcons.length], cost, desc:`Adds ${clickBonus.toLocaleString("en-US")} cookies per click.`, clickBonus });
+  }
 
   const achievements = [
     { id:"first", name:"First crumb", icon:"🍪", desc:"Bake your very first cookie.", test:s=>s.totalBaked>=1 },
@@ -89,26 +92,18 @@
   function totalBuildings(s=state) { return Object.values(s.buildings).reduce((a,b)=>a+(Number(b)||0),0); }
   function getBaseCps(s=state) { return buildings.reduce((sum,b)=>sum+(s.buildings[b.id]||0)*b.cps,0); }
   function getMultiplier(s=state) {
-    let mult = 1 + (s.prestige||0)*0.1;
-    for (const id of s.upgrades) { const u=upgrades.find(x=>x.id===id); if(u?.mult) mult*=u.mult; }
-    if (s.goldenBuffUntil>Date.now()) mult*=s.goldenBuffMult||1;
-    return mult;
+    // Rebirth prestige is permanent; upgrades themselves are flat additions, never boosts.
+    return 1 + (s.prestige||0)*0.1;
   }
-  function getCps(s=state) { return getBaseCps(s)*getMultiplier(s); }
+  function getCps(s=state) {
+    const added = (s.upgrades||[]).reduce((sum,id)=>{const u=upgrades.find(x=>x.id===id);return sum+(u&&u.category==="cps"?u.cpsBonus:0);},0);
+    return (getBaseCps(s)+added)*getMultiplier(s);
+  }
   function getClickPower(s=state) {
-    let power = 1 + (s.prestige||0)*0.1;
-    for (const id of s.upgrades) {
-      const u=upgrades.find(x=>x.id===id);
-      if(u?.click) power+=u.click;
-      if(u?.clickMult) power*=u.clickMult;
-    }
-    return Math.max(1, power*(1+(s.prestige||0)*0.1));
+    const added = (s.upgrades||[]).reduce((sum,id)=>{const u=upgrades.find(x=>x.id===id);return sum+(u&&u.category==="click"?u.clickBonus:0);},0);
+    return (1+added)*(1+(s.prestige||0)*0.1);
   }
-  function getGoldenMultiplier(s=state) {
-    let mult=1;
-    for(const id of s.upgrades){const u=upgrades.find(x=>x.id===id);if(u?.golden)mult*=u.golden;}
-    return mult;
-  }
+  function getGoldenMultiplier() { return 1; }
   function format(value) {
     if (!Number.isFinite(value)) return "∞";
     if (value < 1000) return Math.floor(value).toLocaleString("en-US");
@@ -143,6 +138,8 @@
       const base=freshState();
       state={...base,...parsed,buildings:{...base.buildings,...(parsed.buildings||{})},upgrades:Array.isArray(parsed.upgrades)?parsed.upgrades:[],achievements:Array.isArray(parsed.achievements)?parsed.achievements:[],skins:Array.isArray(parsed.skins)&&parsed.skins.length?parsed.skins:["classic"]};
       state.cookies=Math.max(0,Number(state.cookies)||0);state.totalBaked=Math.max(state.cookies,Number(state.totalBaked)||0);state.runBaked=Math.max(0,Number(state.runBaked)||0);
+      state.upgrades=state.upgrades.filter(id=>upgrades.some(u=>u.id===id));
+      state.goldenBuffUntil=0;state.goldenBuffMult=1;state.goldenBuffLabel="";
       const elapsed=Math.min(8*60*60,Math.max(0,(Date.now()-(Number(state.lastTick)||Date.now()))/1000));
       if(elapsed>5){const earned=getCps(state)*elapsed;state.cookies+=earned;state.totalBaked+=earned;state.runBaked+=earned;toast("Welcome back!",`Your bakery made ${format(earned)} cookies while you were away.`);}
       state.lastTick=Date.now();
@@ -156,7 +153,7 @@
   }
   function buyUpgrade(id) {
     const u=upgrades.find(x=>x.id===id);if(!u||state.upgrades.includes(id)||!canAfford(u.cost))return;
-    state.cookies-=u.cost;state.upgrades.push(id);sound(560,.1,"sine");toast("Upgrade unlocked",u.name+" is now active.");checkAchievements();renderAll();
+    state.cookies-=u.cost;state.upgrades.push(id);sound(560,.1,"sine");toast("Upgrade purchased",u.name+" is now active.");checkAchievements();renderAll();saveGame();
   }
   function clickCookie() {
     const gain=getClickPower();state.cookies+=gain;state.totalBaked+=gain;state.runBaked+=gain;state.totalClicks++;
@@ -173,14 +170,9 @@
   function collectGolden() {
     if(state.goldenUntil<Date.now())return;
     state.goldenUntil=0;state.goldenCaught++;$("#golden-cookie").classList.add("hidden");
-    const roll=Math.random();
-    if(roll<.58){
-      const reward=Math.max(13,getCps()*60+getClickPower()*100)*getGoldenMultiplier();
-      state.cookies+=reward;state.totalBaked+=reward;state.runBaked+=reward;toast("Lucky!",`You found ${format(reward)} bonus cookies.`);
-    }else{
-      state.goldenBuffMult=7;state.goldenBuffUntil=Date.now()+30000;state.goldenBuffLabel="Frenzy";
-      toast("COOKIE FRENZY!", "Production multiplied by 7 for 30 seconds!");
-    }
+    const reward=Math.max(13,getCps()*60+getClickPower()*100);
+    state.cookies+=reward;state.totalBaked+=reward;state.runBaked+=reward;
+    toast("Golden cookie collected!",`You found ${format(reward)} bonus cookies.`);
     state.goldenNext=Date.now()+25000+Math.random()*45000;sound(880,.18,"sine");checkAchievements();renderAll();
   }
   function checkAchievements() {
@@ -214,8 +206,7 @@
     $("#rebirth-button").textContent=prestigeGain()>0?`✨ Rebirth for ${format(prestigeGain())} prestige point${prestigeGain()===1?"":"s"}`:"✨ Rebirth (need 1 billion lifetime cookies)";
     $("#main-cookie").className="main-cookie skin-"+(state.activeSkin||"classic");
     $("#sound-toggle").textContent=state.sound?"🔊":"🔇";
-    const activeBuff=state.goldenBuffUntil>Date.now();
-    $("#cookie-label").textContent=activeBuff?`${state.goldenBuffLabel} active — ${Math.ceil((state.goldenBuffUntil-Date.now())/1000)}s left`:"cookies in the vault";
+    $("#cookie-label").textContent="cookies in the vault";
     const remaining=state.goldenUntil-Date.now();
     if(remaining>0){$("#golden-cookie").classList.remove("hidden");$("#golden-timer").textContent=Math.ceil(remaining/1000)+"s LEFT";}
     else{$("#golden-cookie").classList.add("hidden");$("#golden-timer").textContent="SEARCHING";}
@@ -228,16 +219,14 @@
   }
   function renderUpgrades() {
     const available=upgrades.filter(u=>!state.upgrades.includes(u.id));
-    $("#upgrade-count").textContent=state.upgrades.length+" unlocked";
+    $("#upgrade-count").textContent=state.upgrades.filter(id=>upgrades.some(u=>u.id===id)).length+" / 180 owned";
     $("#upgrade-badge").classList.toggle("hidden",!available.some(u=>canAfford(u.cost)));
     const renderUpgradeCards = list => list.map(u=>{
       const owned=state.upgrades.includes(u.id),afford=canAfford(u.cost);
-      return `<article class="upgrade-card ${afford||owned?"":"unaffordable"}"><div class="item-icon">${u.icon}</div><div class="item-info"><h3>${u.name}</h3><p>${u.desc}</p></div><div class="item-action">${owned?'<span class="owned-stamp">OWNED ✓</span>':`<span class="price">🍪 ${format(u.cost)}</span><button class="buy-button" data-buy-upgrade="${u.id}" ${afford?"":"disabled"}>UNLOCK</button>`}</div></article>`;
+      return `<article class="upgrade-card ${afford||owned?"":"unaffordable"}"><div class="item-icon">${u.icon}</div><div class="item-info"><h3>${u.name}</h3><p>${u.desc}</p></div><div class="item-action">${owned?'<span class="owned-stamp">OWNED ✓</span>':`<span class="price">🍪 ${format(u.cost)}</span><button class="buy-button" data-buy-upgrade="${u.id}" ${afford?"":"disabled"}>BUY</button>`}</div></article>`;
     }).join("");
-    const clickUpgrades = upgrades.filter(u => u.click || u.clickMult);
-    const cpsUpgrades = upgrades.filter(u => !u.click && !u.clickMult);
-    $("#upgrade-cps-list").innerHTML=renderUpgradeCards(cpsUpgrades);
-    $("#upgrade-click-list").innerHTML=renderUpgradeCards(clickUpgrades);
+    $("#upgrade-cps-list").innerHTML=renderUpgradeCards(upgrades.filter(u=>u.category==="cps"));
+    $("#upgrade-click-list").innerHTML=renderUpgradeCards(upgrades.filter(u=>u.category==="click"));
   }
   function renderAchievements() {
     const done=state.achievements.length;$("#achievement-progress").textContent=done+" / "+achievements.length;$("#achievement-progress-bar").style.width=(done/achievements.length*100)+"%";
@@ -358,6 +347,11 @@
   function showTab(tabName) {
     $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
     $$(".tab-content").forEach(c => c.classList.toggle("hidden", c.id !== "tab-" + tabName));
+    if (tabName === "upgrades") {
+      const activeCategory = document.querySelector("[data-upgrade-category].active")?.dataset.upgradeCategory || "cps";
+      $("#upgrade-cps-panel").classList.toggle("hidden", activeCategory !== "cps");
+      $("#upgrade-click-panel").classList.toggle("hidden", activeCategory !== "click");
+    }
   }
   function unlockAdmin() {
     adminUnlocked = true;
@@ -386,7 +380,8 @@
   $("#cancel-reset").addEventListener("click",()=>$("#confirm-modal").classList.add("hidden"));
   $("#confirm-reset").addEventListener("click",()=>{localStorage.removeItem(SAVE_KEY);state=freshState();$("#confirm-modal").classList.add("hidden");renderAll();saveGame();toast("Fresh start","Your bakery has been reset.");});
   $("#rebirth-button").addEventListener("click",doRebirth);
-  $$(".tab").forEach(btn=>btn.addEventListener("click",()=>{
+  $$(".tab").forEach(btn=>btn.addEventListener("click",event=>{
+    event.preventDefault();
     if(btn.dataset.tab === "admin" && !adminUnlocked) return;
     showTab(btn.dataset.tab);
   }));
@@ -475,6 +470,13 @@
   loadGame();
   if(!state.goldenNext||state.goldenNext<Date.now())state.goldenNext=Date.now()+20000;
   renderAll();
+  // Always open the Upgrades page on startup; otherwise every tab-content section
+  // starts hidden in the HTML and the game appears to have no pages.
+  showTab("upgrades");
+  // Ensure CPS is the initial upgrade category and the two category buttons are visible.
+  $$('[data-upgrade-category]').forEach(btn => btn.classList.toggle('active', btn.dataset.upgradeCategory === 'cps'));
+  $('#upgrade-cps-panel').classList.remove('hidden');
+  $('#upgrade-click-panel').classList.add('hidden');
   renderPlayerUsername();
   if (!getPlayerUsername() && !usernamePromptShown) {
     usernamePromptShown = true;

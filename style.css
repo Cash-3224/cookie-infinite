@@ -22,3 +22,28 @@ button{font:inherit;cursor:pointer}button:focus-visible,[role=button]:focus-visi
 #tab-trading input,#tab-trading select{display:block;width:100%;margin:8px 0 14px;padding:12px;border-radius:9px;border:1px solid #493020;background:#100b09;color:#f8e5d4;font:inherit}
 #tab-trading label{display:block;color:#ffbd7a;font-size:12px;font-weight:800}
 #tab-trading button:disabled{opacity:.55;cursor:not-allowed}
+
+/* Keep Trading clearly visible in the main navigation. */
+.trading-tab{display:block!important;visibility:visible!important;opacity:1!important}
+.upgrade-subtabs{display:flex!important;visibility:visible!important;opacity:1!important}
+.upgrade-category-panel.hidden{display:none!important}
+
+
+/* Cookie Infinite update: upgrade category lists and the trading panel */
+.upgrade-subtabs{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:6px;margin:18px 0 16px}
+.upgrade-subtab{min-height:48px;border:1px solid #493020;background:#100b09;color:#d8b69a;border-radius:10px;transition:background .18s,border-color .18s,transform .18s}
+.upgrade-subtab:hover{border-color:#b9652b;transform:translateY(-1px)}
+.upgrade-subtab.active{background:linear-gradient(135deg,#71340f,#a84f18);border-color:#ff9a43;color:#fff5e9;box-shadow:0 0 20px #ff8a241c}
+.upgrade-subheading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:18px 0 12px}
+.upgrade-subheading h3{display:flex;align-items:center;gap:9px;margin:0}
+.upgrade-total{display:inline-grid;place-items:center;min-width:30px;height:24px;padding:0 7px;border:1px solid #75401f;border-radius:7px;color:#ffbf7d;background:#ff8a2412;font-size:11px}
+#upgrade-cps-list,#upgrade-click-list{max-height:min(70vh,820px);overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-color:#704022 #130d0a;scrollbar-width:thin}
+.upgrade-card{align-items:flex-start}.upgrade-card .item-info h3{line-height:1.35}.upgrade-card .item-action{min-width:112px}.upgrade-card .price{white-space:nowrap}.upgrade-card .buy-button{min-width:86px}
+#tab-trading .trade-intro{display:flex;align-items:center;gap:13px;padding:15px;margin:0 0 16px;border:1px solid #54351f;border-radius:13px;background:linear-gradient(120deg,#24160f,#17100d)}
+.trade-intro-icon{flex:0 0 40px;width:40px;height:40px;display:grid;place-items:center;border:1px solid #714322;border-radius:11px;background:#ff8a2415;font-size:20px}
+.trade-intro>div{min-width:0;flex:1}.trade-intro strong{display:block;font-size:13px;color:#ffe0c1}.trade-intro p{margin:4px 0 0;color:#bba18d;font-size:11px;line-height:1.6}
+.trade-status{flex:0 0 auto;padding:6px 8px;border-radius:7px;border:1px solid #674522;background:#ffb3230c;color:#ffbd7a;font-size:8px;font-weight:900;letter-spacing:.7px}
+#tab-trading .admin-section{margin-top:12px;padding:17px;border:1px solid #38251a;border-radius:13px;background:#100b09a8}#tab-trading .admin-section h3{margin-top:0}
+#tab-trading input,#tab-trading select{box-sizing:border-box;width:100%;min-height:44px;margin:7px 0 13px;padding:11px 12px;border:1px solid #493020;border-radius:9px;background:#100b09;color:#f8e7d5}
+#tab-trading .primary-button{min-height:43px}
+@media(max-width:760px){.app-shell{grid-template-columns:minmax(0,1fr);padding:0 14px}.topbar{height:auto;min-height:74px;padding:12px 14px;gap:12px;flex-wrap:wrap}.top-actions{flex-wrap:wrap}.tabs{flex-wrap:wrap;justify-content:flex-start}.tab{flex:1 1 28%}.tab-content{padding:16px}.trade-status{display:none}}
