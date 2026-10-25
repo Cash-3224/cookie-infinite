@@ -16,8 +16,6 @@
       <span>COOKIE<span class="brand-accent">INFINITE</span><small>THE MULTIVERSE OF CRUMBS</small></span>
     </a>
     <div class="top-actions">
-      <span id="player-username" class="player-username">👤 Choose username</span>
-      <button id="change-username" class="small-button" type="button">Username</button>
       <span id="save-status" class="save-status"><span class="status-dot"></span> Saved locally</span>
       <button id="sound-toggle" class="icon-button" title="Toggle sound" aria-label="Toggle sound">🔊</button>
       <button id="save-button" class="small-button">Save now</button>
@@ -51,16 +49,6 @@
         <div class="stat-card"><span class="stat-icon">🏭</span><span class="stat-name">BUILDINGS</span><strong id="building-count">0</strong></div>
       </div>
       <div class="golden-notice"><span>✨</span><div><strong>Golden cookie alert</strong><small>Keep an eye out. Click it before it disappears!</small></div><span id="golden-timer" class="golden-timer">SEARCHING</span></div>
-      <section id="global-chat" class="global-chat" aria-label="Global chat">
-        <div class="chat-heading"><div><span class="eyebrow">🍪 BAKERS EVERYWHERE</span><h2>Global Chat</h2></div><span id="chat-status" class="chat-status">Connecting…</span></div>
-        <div id="chat-messages" class="chat-messages" aria-live="polite"><p class="chat-empty">Loading real messages…</p></div>
-        <form id="chat-form" class="chat-form">
-          <label class="sr-only" for="chat-message">Write a global message</label>
-          <input id="chat-message" type="text" maxlength="240" autocomplete="off" placeholder="Say something to all bakers…" required>
-          <button id="chat-send" class="buy-button" type="submit">Send</button>
-        </form>
-        <small class="chat-note">Your chosen username is displayed. Only messages actually sent by players appear here.</small>
-      </section>
     </section>
 
     <section class="right-column">
@@ -69,19 +57,26 @@
         <button class="tab" data-tab="achievements">🏆 <span>Trophies</span></button>
         <button class="tab" data-tab="skins">🎨 <span>Skins</span></button>
         <button class="tab" data-tab="prestige">✨ <span>Rebirth</span></button>
-        <button class="tab social-tab" data-tab="friend-requests">👥 <span>Friend Rq</span><i id="friend-request-badge" class="tab-badge hidden">0</i></button>
-        <button class="tab social-tab" data-tab="dms">💬 <span>DM's</span><i id="dm-unread-badge" class="tab-badge hidden">!</i></button>
+        <button class="tab" data-tab="trading">🔁 <span>Trading</span></button>
         <button id="admin-tab-button" class="tab admin-tab hidden" data-tab="admin">🛡️ <span>Admin</span></button>
       </nav>
-      <section id="tab-upgrades" class="tab-content panel">
+      <section id="tab-upgrades" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">MAKE EVERY CRUMB COUNT</span><h2>Upgrades</h2></div><span class="pill" id="upgrade-count">0 unlocked</span></div>
-        <p class="muted intro">Buy repeatable per-click and CPS boosts, unlock permanent upgrades, and build your bakery here.</p>
-        <div class="upgrade-subheading"><h3>⚡ Repeatable boosts</h3><p class="muted">These can be purchased again and again. Each purchase gets more expensive.</p></div>
-        <div id="repeatable-upgrade-list" class="upgrade-list"></div>
-        <div class="upgrade-subheading"><h3>🏭 Production buildings</h3><span class="pill" id="shop-owned">0 owned</span></div>
-        <div id="building-list" class="building-list"></div>
-        <div class="upgrade-subheading"><h3>✨ Special upgrades</h3></div>
-        <div id="upgrade-list" class="upgrade-list"></div>
+        <p class="muted intro">Choose a category. Buildings and production boosts are under CPS.</p>
+        <div class="upgrade-subtabs" role="tablist" aria-label="Upgrade categories">
+          <button class="upgrade-subtab active" data-upgrade-category="cps">⚡ CPS</button>
+          <button class="upgrade-subtab" data-upgrade-category="click">👆 Per Click</button>
+        </div>
+        <div id="upgrade-cps-panel" class="upgrade-category-panel">
+          <div class="upgrade-subheading"><h3>🏭 CPS Buildings</h3><span class="muted">Buy more automatic production</span></div>
+          <div id="building-list" class="building-list"></div>
+          <div class="upgrade-subheading"><h3>⚡ CPS Boosts</h3><span class="muted">Multiply your cookie production</span></div>
+          <div id="upgrade-cps-list" class="upgrade-list"></div>
+        </div>
+        <div id="upgrade-click-panel" class="upgrade-category-panel hidden">
+          <div class="upgrade-subheading"><h3>👆 Per Click Boosts</h3><span class="muted">Make every click stronger</span></div>
+          <div id="upgrade-click-list" class="upgrade-list"></div>
+        </div>
       </section>
       <section id="tab-achievements" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">PROVE YOUR CRUMB SUPREMACY</span><h2>Trophies</h2></div><span class="pill" id="achievement-progress">0 / 0</span></div>
@@ -92,30 +87,17 @@
         <div class="section-heading"><div><span class="eyebrow">LOOK FRESH WHILE YOU BAKE</span><h2>Cookie skins</h2></div><span class="pill" id="skin-owned">1 owned</span></div>
         <div id="skin-list" class="skin-list"></div>
       </section>
-      <section id="tab-friend-requests" class="tab-content panel hidden">
-        <div class="section-heading"><div><span class="eyebrow">FIND YOUR BAKING CREW</span><h2>👥 Friend Requests</h2></div><span class="pill" id="friend-request-count">0 pending</span></div>
-        <p class="muted">Enter a player's exact username to send a request. They will see it here and can accept or decline.</p>
-        <form id="friend-request-form" class="social-form"><label for="friend-username">Username</label><div class="social-inline"><input id="friend-username" type="text" minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="Enter exact username" required><button class="primary-button" id="send-friend-request" type="submit">Send request</button></div></form>
-        <div class="social-subsection"><h3>📥 Incoming requests</h3><div id="incoming-friend-requests" class="social-list"><p class="chat-empty">Sign in to load requests.</p></div></div>
-        <div class="social-subsection"><h3>📤 Sent requests</h3><div id="outgoing-friend-requests" class="social-list"><p class="chat-empty">No sent requests.</p></div></div>
-        <div class="social-subsection"><h3>💚 Friends</h3><div id="friends-list" class="social-list"><p class="chat-empty">Accepted friends appear here.</p></div></div>
-      </section>
-      <section id="tab-dms" class="tab-content panel hidden">
-        <div class="section-heading"><div><span class="eyebrow">PRIVATE CONVERSATIONS</span><h2>💬 DM's</h2></div><span class="pill" id="dm-current-friend">Choose a friend</span></div>
-        <p class="muted">You can only message players who have accepted your friend request. Conversations are private to their two participants.</p>
-        <div class="dm-layout"><aside><h3>Your friends</h3><div id="dm-friends" class="social-list"><p class="chat-empty">Accept a friend request to start chatting.</p></div></aside><div class="dm-conversation"><div id="dm-messages" class="chat-messages dm-messages"><p class="chat-empty">Choose a friend to open a conversation.</p></div><form id="dm-form" class="chat-form"><label class="sr-only" for="dm-message">Write a private message</label><input id="dm-message" type="text" maxlength="1000" autocomplete="off" placeholder="Write a private message…" required disabled><button id="dm-send" class="buy-button" type="submit" disabled>Send</button></form></div></div>
+      <section id="tab-trading" class="tab-content panel hidden">
+        <div class="section-heading"><div><span class="eyebrow">PLAYER-TO-PLAYER EXCHANGE</span><h2>🔁 Trading</h2></div><span class="pill">TRADE HUB</span></div>
+        <div class="admin-warning">Trading needs a deployed Supabase backend and authenticated player accounts. This package includes a secure database setup template; transfers will not be enabled until the setup in README.txt is completed.</div>
+        <div class="admin-section"><h3>🍪 Transfer cookies</h3><label for="trade-recipient">Recipient username</label><input id="trade-recipient" type="text" maxlength="16" placeholder="Player username"><label for="trade-cookie-amount">Cookies to transfer</label><input id="trade-cookie-amount" type="number" min="1" step="1" placeholder="Amount"><button id="trade-cookie-send" class="primary-button" type="button" disabled>Transfer cookies (backend setup required)</button></div>
+        <div class="admin-section"><h3>🎨 Trade a skin</h3><label for="trade-skin-recipient">Recipient username</label><input id="trade-skin-recipient" type="text" maxlength="16" placeholder="Player username"><label for="trade-skin-select">Skin you own</label><select id="trade-skin-select"><option value="">Choose a skin</option></select><button id="trade-skin-send" class="primary-button" type="button" disabled>Trade skin (backend setup required)</button></div>
+        <div class="admin-section"><h3>📜 Trading rules</h3><p class="muted">Only trade skins you own. Cookie transfers must be positive, and the sender must have enough cookies. Server-side checks are required to prevent forged balances and duplicate transfers.</p></div>
       </section>
       <section id="tab-admin" class="tab-content panel hidden">
         <div class="section-heading"><div><span class="eyebrow">RESTRICTED CONTROL ROOM</span><h2>🛡️ Admin panel</h2></div><span class="pill admin-pill">ADMIN ACCESS</span></div>
-        <div class="admin-warning">🔐 <strong>Protected global admin:</strong> global announcements and multiplier changes are checked by a Supabase Edge Function. Deploy the updated function and configure its secrets. Cookie controls below still affect only this browser.</div>
-        <div class="admin-section"><h3>📢 Global announcement</h3><p class="muted">Publish a message to every player using an authorized admin username.</p><textarea id="admin-message" maxlength="240" placeholder="Type your announcement (max 240 characters)..."></textarea><div class="admin-actions"><button id="send-admin-message" class="primary-button">Publish announcement</button><button id="clear-admin-message" class="small-button">Clear message</button></div><div id="admin-announcement-preview" class="announcement-preview hidden"></div></div>
-        <div class="admin-section"><h3>⚡ Global multipliers</h3><p class="muted">These boosts apply to every player while active. Set a duration; the server stores the expiry time.</p>
-          <label for="admin-click-multiplier">Global click multiplier</label><select id="admin-click-multiplier" class="admin-select"><option value="1">×1 (normal)</option><option value="2">×2</option><option value="5">×5</option><option value="10">×10</option><option value="25">×25</option><option value="50">×50</option><option value="100">×100</option></select>
-          <label for="admin-cps-multiplier">Global CPS multiplier</label><select id="admin-cps-multiplier" class="admin-select"><option value="1">×1 (normal)</option><option value="2">×2</option><option value="5">×5</option><option value="10">×10</option><option value="25">×25</option><option value="50">×50</option><option value="100">×100</option></select>
-          <label for="admin-multiplier-duration">Duration</label><select id="admin-multiplier-duration" class="admin-select"><option value="300">5 minutes</option><option value="900">15 minutes</option><option value="1800">30 minutes</option><option value="3600">1 hour</option><option value="21600">6 hours</option><option value="86400">24 hours</option></select>
-          <div id="global-multiplier-status" class="multiplier-status">Loading global multiplier status…</div>
-          <div class="admin-actions"><button id="admin-activate-multipliers" class="primary-button">Activate globally</button><button id="admin-deactivate-multipliers" class="small-button danger">Deactivate boosts</button></div>
-        </div>
+        <div class="admin-warning">⚠️ <strong>Local-only admin:</strong> this offline browser game cannot send announcements to other players. Global messages here appear only in this browser. The unlock code is visible in the JavaScript, so this is not secure for a public multiplayer game.</div>
+        <div class="admin-section"><h3>📢 Global announcement</h3><p class="muted">Display an announcement banner in this browser's game.</p><textarea id="admin-message" maxlength="240" placeholder="Type your announcement (max 240 characters)..."></textarea><div class="admin-actions"><button id="send-admin-message" class="primary-button">Publish announcement</button><button id="clear-admin-message" class="small-button">Clear message</button></div><div id="admin-announcement-preview" class="announcement-preview hidden"></div></div>
         <div class="admin-section"><h3>🍪 Cookie controls</h3><label for="admin-cookie-amount">Amount of cookies to add</label><div class="admin-inline"><input id="admin-cookie-amount" type="number" min="1" step="any" value="1000000"><button id="admin-add-cookies" class="buy-button">Add cookies</button></div><label for="admin-prestige-amount">Set prestige points</label><div class="admin-inline"><input id="admin-prestige-amount" type="number" min="0" step="1" value="100"><button id="admin-set-prestige" class="buy-button">Set prestige</button></div><div class="admin-actions"><button id="admin-unlock-all" class="small-button">Unlock all upgrades + skins</button><button id="admin-golden" class="small-button">Spawn golden cookie</button></div></div>
         <div class="admin-section"><h3>💾 Game management</h3><p class="muted">Save the current game, or log out of the admin panel.</p><div class="admin-actions"><button id="admin-save" class="small-button">Save game now</button><button id="admin-logout" class="small-button danger">Lock admin panel</button></div></div>
         <div class="admin-section"><h3>🧾 Admin activity</h3><div id="admin-log" class="admin-log"><p class="muted">Admin actions will appear here.</p></div></div>
@@ -142,32 +124,10 @@
       <div class="modal-actions"><button type="button" id="cancel-admin-login" class="small-button">Cancel</button><button type="submit" class="primary-button login-submit">Unlock panel</button></div>
     </form>
   </div>
-  <div id="global-announcement" class="global-announcement hidden" role="status"><span>📢</span><div><strong>GLOBAL ANNOUNCEMENT</strong><p id="global-announcement-text"></p><small id="global-announcement-byline"></small></div><button id="dismiss-announcement" aria-label="Dismiss announcement">×</button></div>
+  <div id="global-announcement" class="global-announcement hidden" role="status"><span>📢</span><div><strong>ANNOUNCEMENT</strong><p id="global-announcement-text"></p></div><button id="dismiss-announcement" aria-label="Dismiss announcement">×</button></div>
   <div id="confirm-modal" class="modal-backdrop hidden">
     <div class="modal panel"><div class="modal-icon">⚠️</div><h2>Reset your bakery?</h2><p>This deletes your local save and starts a brand-new game. This cannot be undone.</p><div class="modal-actions"><button id="cancel-reset" class="small-button">Cancel</button><button id="confirm-reset" class="small-button danger">Delete save</button></div></div>
   </div>
-  <!-- MULTI-ADMIN LIST: add each authorized username below. Only listed usernames see the Admin buttons. Also add the same names to Supabase secret COOKIE_ADMIN_USERNAMES and redeploy the Edge Function. -->
-  <script>
-    window.COOKIE_INFINITE_ADMIN_USERNAMES = [
-      "Theee_Cash",
-      "ChakraCraft7",
-      // Add more authorized usernames here, and also update the Supabase COOKIE_ADMIN_USERNAMES secret.
-    ];
-  </script>
-  <div id="account-modal" class="modal-backdrop account-backdrop" role="dialog" aria-modal="true" aria-labelledby="account-title">
-    <form id="account-form" class="modal panel account-modal">
-      <div class="modal-icon">🍪🔐</div><h2 id="account-title">Cookie Infinite Account</h2>
-      <p id="account-description">Create an account or sign in. Your username belongs to your account.</p>
-      <label class="login-label" for="account-username">Username</label>
-      <input id="account-username" class="account-input" type="text" minlength="3" maxlength="16" pattern="[A-Za-z0-9_]{3,16}" autocomplete="username" placeholder="3–16 letters, numbers, _" required>
-      <label class="login-label" for="account-password">Password</label>
-      <input id="account-password" class="account-input" type="password" minlength="8" autocomplete="current-password" placeholder="At least 8 characters" required>
-      <p id="account-error" class="login-error hidden"></p>
-      <div class="account-buttons"><button id="account-signin" class="primary-button" type="button">Sign in</button><button id="account-signup" class="small-button" type="button">Create account</button></div>
-      <small class="account-note">Use a unique password. Passwords are handled by Supabase Auth, not stored in your game files.</small>
-    </form>
-  </div>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="game.js"></script>
 </body>
 </html>
