@@ -94,25 +94,56 @@
         <div class="admin-section"><h3>🎨 Trade a skin</h3><label for="trade-skin-recipient">Recipient username</label><input id="trade-skin-recipient" type="text" maxlength="16" placeholder="Player username"><label for="trade-skin-select">Skin you own</label><select id="trade-skin-select"><option value="">Choose a skin</option></select><button id="trade-skin-send" class="primary-button" type="button" disabled>Trade skin</button></div>
         <div class="admin-section"><h3>📜 Trading rules</h3><p class="muted">Only skins you own can be traded. Cookie transfers must be positive and within your balance. Server-side checks protect balances and prevent duplicate transfers.</p></div>
       </section>
-      <section id="tab-admin" class="tab-content panel hidden">
-        <div class="section-heading"><div><span class="eyebrow">RESTRICTED CONTROL ROOM</span><h2>🛡️ Admin panel</h2></div><span class="pill admin-pill">ADMIN ACCESS</span></div>
-        <div class="admin-warning">⚠️ <strong>Local-only admin:</strong> this offline browser game cannot send announcements to other players. Global messages here appear only in this browser. The unlock code is visible in the JavaScript, so this is not secure for a public multiplayer game.</div>
-        <div class="admin-section"><h3>📢 Global announcement</h3><p class="muted">Display an announcement banner in this browser's game.</p><textarea id="admin-message" maxlength="240" placeholder="Type your announcement (max 240 characters)..."></textarea><div class="admin-actions"><button id="send-admin-message" class="primary-button">Publish announcement</button><button id="clear-admin-message" class="small-button">Clear message</button></div><div id="admin-announcement-preview" class="announcement-preview hidden"></div></div>
-        <div class="admin-section"><h3>🍪 Cookie controls</h3><label for="admin-cookie-amount">Amount of cookies to add</label><div class="admin-inline"><input id="admin-cookie-amount" type="number" min="1" step="any" value="1000000"><button id="admin-add-cookies" class="buy-button">Add cookies</button></div><label for="admin-prestige-amount">Set prestige points</label><div class="admin-inline"><input id="admin-prestige-amount" type="number" min="0" step="1" value="100"><button id="admin-set-prestige" class="buy-button">Set prestige</button></div><div class="admin-actions"><button id="admin-unlock-all" class="small-button">Unlock all upgrades + skins</button><button id="admin-golden" class="small-button">Spawn golden cookie</button></div></div>
-        <div class="admin-section"><h3>💾 Game management</h3><p class="muted">Save the current game, or log out of the admin panel.</p><div class="admin-actions"><button id="admin-save" class="small-button">Save game now</button><button id="admin-logout" class="small-button danger">Lock admin panel</button></div></div>
-        <div class="admin-section"><h3>🧾 Admin activity</h3><div id="admin-log" class="admin-log"><p class="muted">Admin actions will appear here.</p></div></div>
-      </section>
-      <section id="tab-prestige" class="tab-content panel hidden">
-        <div class="section-heading"><div><span class="eyebrow">START OVER. COME BACK STRONGER.</span><h2>Rebirth chamber</h2></div><span class="pill">PRESTIGE</span></div>
-        <div class="prestige-art">✨</div>
-        <div class="prestige-stat"><span>Available prestige points</span><strong id="prestige-gain">0</strong></div>
-        <p class="muted">Rebirth resets your cookies, buildings and upgrades, but grants permanent prestige points. Each point increases all cookie production by <strong>+10%</strong>. Prestige points and lifetime baked cookies are kept.</p>
-        <div class="prestige-next"><span>Current production bonus</span><strong id="prestige-bonus">+0%</strong></div>
-        <button id="rebirth-button" class="primary-button" disabled>✨ Rebirth (need 1 billion lifetime cookies)</button>
-        <small class="muted">You need at least 1 billion lifetime cookies to rebirth. More lifetime cookies means more points.</small>
-      </section>
-    </section>
-  </main>
+      <
+<div class="admin-section">
+  <h3>🌍 Global Multipliers</h3>
+  <p class="muted">Change cookie production for every player.</p>
+
+  <label for="global-multiplier">Production multiplier</label>
+  <select id="global-multiplier">
+    <option value="1">1× — Normal</option>
+    <option value="2">2× — Double</option>
+    <option value="5">5× — 5 times</option>
+    <option value="10">10× — 10 times</option>
+    <option value="25">25× — 25 times</option>
+    <option value="50">50× — 50 times</option>
+    <option value="100">100× — 100 times</option>
+  </select>
+
+  <button id="global-multiplier-apply" class="primary-button">
+    Apply Global Multiplier
+  </button>
+  <p id="global-multiplier-status" class="muted">
+    Loading global multiplier...
+  </p>
+</div>
+
+<div class="admin-section">
+  <h3>💬 Global Chat</h3>
+  <p class="muted">Read and moderate messages from all players.</p>
+
+  <div id="global-chat-status" class="muted">Connecting to chat...</div>
+  <div id="global-chat-messages"
+       style="max-height:300px;overflow-y:auto;overflow-wrap:anywhere"
+       aria-live="polite"></div>
+
+  <form id="global-chat-form">
+    <label for="global-chat-username">Your chat name</label>
+    <input id="global-chat-username" maxlength="20"
+           placeholder="Choose a display name" required>
+
+    <label for="global-chat-input">Message</label>
+    <textarea id="global-chat-input" maxlength="300"
+              placeholder="Say something to everyone..." required></textarea>
+
+    <button type="submit" class="primary-button">Send message</button>
+  </form>
+
+  <button id="global-chat-clear" class="small-button danger">
+    Clear Global Chat
+  </button>
+</div>
+
 
   <footer class="footer"><span>COOKIE INFINITE <b>v1.0</b></span><span>Made of pixels, powered by crumbs.</span><span id="footer-save">Your progress is saved in this browser.</span></footer>
   <div id="toast-area" class="toast-area" aria-live="polite"></div>

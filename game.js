@@ -907,15 +907,16 @@
     }
   }
 
-  function renderAll() {
+  
+function renderAll() {
     renderCounters();
     renderBuildings();
     renderUpgrades();
     renderAchievements();
     renderSkins();
     renderPlayerUsername();
-    renderAdminMessage();
-  }
+}
+
 
   // ============================================================
   // EVENT LISTENERS
@@ -1044,18 +1045,59 @@
       if ($("#admin-message")) $("#admin-message").value = "";
       renderAnnouncement("");
 
-      addAdminLog("Cleared the global announcement.");
-      toast("Global announcement cleared", "The banner was removed for all players.");
-    } catch (error) {
-      toast("Could not clear announcement", error.message + ". Check that the admin-announcement Edge Function is deployed.");
-    } finally {
-      if (button) button.disabled = false;
-    }
-  });
+     
+const DISMISSED_ANNOUNCEMENT_KEY = "cookie_infinite_dismissed_announcement_v1";
 
-  $("#dismiss-announcement")?.addEventListener("click", () => {
-    $("#global-announcement")?.classList.add("hidden");
-  });
+function renderAnnouncement(message, username = "Admin", id = null) {
+  const banner = $("#global-announcement");
+  const text = $("#global-announcement-text");
+
+  if (!banner || !text) return;
+
+  const cleanMessage = String(message || "").trim();
+
+  if (!cleanMessage) {
+    banner.classList.add("hidden");
+    return;
+  }
+
+  const announcementId = String(id || cleanMessage);
+  const dismissedId = localStorage.getItem(DISMISSED_ANNOUNCEMENT_KEY);
+
+  text.textContent = cleanMessage;
+
+  let author = banner.querySelector(".announcement-author");
+
+  if (!author) {
+    author = document.createElement("small");
+    author.className = "announcement-author";
+    text.insertAdjacentElement("afterend", author);
+  }
+
+  author.textContent = `Posted by ${username || "Admin"}`;
+
+  banner.dataset.announcementId = announcementId;
+
+  if (dismissedId === announcementId) {
+    banner.classList.add("hidden");
+  } else {
+    banner.classList.remove("hidden");
+  }
+}
+
+$("#dismiss-announcement")?.addEventListener("click", () => {
+  const banner = $("#global-announcement");
+  if (!banner) return;
+
+  const announcementId = banner.dataset.announcementId;
+
+  if (announcementId) {
+    localStorage.setItem(DISMISSED_ANNOUNCEMENT_KEY, announcementId);
+  }
+
+  banner.classList.add("hidden");
+});
+
 
   $("#admin-add-cookies")?.addEventListener("click", () => {
     if (!adminUnlocked) return;
@@ -1194,7 +1236,7 @@
   });
 
   $("#upgrade-cps-panel")?.classList.remove("hidden");
-  $("#upgrade-click-panel")?.classList.add("hidden");
+ $("#upgrade-click-panel")?.classList.add("hidden");
 
   renderPlayerUsername();
 
